@@ -84,3 +84,37 @@ https://docs.microsoft.com/zh-cn/aspnet/core/signalr/javascript-client?view=aspn
 npm install --save @aspnet/signalr
 ```
 
+SignalR库在vue中的使用：
+
+```
+import * as signalR from "@aspnet/signalr";
+
+...
+
+created(){
+	this.connection = new signalR.HubConnectionBuilder()
+    .withUrl("https:localhost:5001/chatHub", {
+      skipNegotiation: true,
+      transport: signalR.HttpTransportType.WebSockets
+    })
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
+
+  //this.connection.on("ReceiveMessage", message => {
+  //  this.mesages.push(message);
+  //});
+
+  this.connection.start();
+}
+```
+
+
+
+调用服务端方法：
+
+```
+this.connection
+    .invoke("SendMessage", message)
+    .catch(err => console.error(err));
+```
+
