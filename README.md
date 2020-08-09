@@ -81,6 +81,6 @@ https://docs.microsoft.com/zh-cn/aspnet/core/signalr/javascript-client?view=aspn
 
 
 ```
-npm install @microsoft/signalr
+npm install --save @aspnet/signalr
 ```
 
