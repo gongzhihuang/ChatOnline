@@ -1,5 +1,11 @@
 <template>
   <div class="chat">
+    <div class="chat-user">
+      登录
+      <el-input class="name" v-model="userName" placeholder="用户名"></el-input>
+      <el-input v-model="password" placeholder="密码"></el-input>
+      <el-button class="btn" size="small" @click="login()">登录</el-button>
+    </div>
     <div class="chat-list">
       <el-card class="box-card">
         <div slot="header" class="clearfix">
@@ -35,30 +41,52 @@ export default {
   },
   data() {
     return {
+      userName: "",
+      password: "",
+      access_token: "",
       connection: null,
       input: "",
       mesages: []
     };
   },
   created() {
-    this.connectServer();
+    // this.connectServer();
   },
   methods: {
+    /**
+     * 用户登录
+     */
+    login() {
+      let params = {
+        name: this.userName,
+        password: this.password
+      };
+      let that = this;
+      this.$axios
+        .post("https://localhost:5001/Account/login", params)
+        .then(function(response) {
+          console.log(response);
+          that.access_token = response.data.access_token;
+          that.connectServer(); //登录成功，连接到signar服务
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    },
     connectServer() {
+      let that = this;
       this.connection = new signalR.HubConnectionBuilder()
         .withUrl("https:localhost:5001/hubs/chathub", {
           skipNegotiation: true,
           transport: signalR.HttpTransportType.WebSockets,
           accessTokenFactory: () => {
-            return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJuYW1lIjoiYWEiLCJuYmYiOjE1OTcwMjg1MzEsImV4cCI6MTU5OTYyMDUzMSwiaXNzIjoiQ2hhdE9ubGluZSIsImF1ZCI6ImNoYXQtb25saW5lIn0.ZlQraacKAWVXzDySSljiuFpkeVpYADKcsE5UbtaqXcE"
-            // Get and return the access token.
-            // This function can return a JavaScript Promise if asynchronous
-            // logic is required to retrieve the access token.
+            return that.access_token;
           }
         })
         .configureLogging(signalR.LogLevel.Information)
         .build();
 
+      //调用signalr服务方法，发送信息
       this.connection.on("ReceiveMessage", message => {
         this.mesages.push(message);
       });
@@ -90,6 +118,16 @@ export default {
   display: flex;
   align-items: center;
   flex-direction: column;
+}
+.chat-user {
+  margin-bottom: 10px;
+  .name {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  .btn {
+    margin-top: 10px;
+  }
 }
 .chat-list {
 }

@@ -40,7 +40,7 @@ namespace ChatOnline.Server.Controllers
         // }
         
         [HttpPost("login")]
-        public IActionResult Login(LoginRequestDto userDto)
+        public IActionResult Login([FromBody]LoginRequestDto userDto)
         {
             var res = _users.FirstOrDefault(x => x.Name == userDto.Name && x.Password == userDto.Password);
             if (res == null)
