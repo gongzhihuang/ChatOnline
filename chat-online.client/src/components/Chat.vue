@@ -46,9 +46,15 @@ export default {
   methods: {
     connectServer() {
       this.connection = new signalR.HubConnectionBuilder()
-        .withUrl("https:localhost:5001/chatHub", {
+        .withUrl("https:localhost:5001/hubs/chathub", {
           skipNegotiation: true,
-          transport: signalR.HttpTransportType.WebSockets
+          transport: signalR.HttpTransportType.WebSockets,
+          accessTokenFactory: () => {
+            return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJuYW1lIjoiYWEiLCJuYmYiOjE1OTcwMjg1MzEsImV4cCI6MTU5OTYyMDUzMSwiaXNzIjoiQ2hhdE9ubGluZSIsImF1ZCI6ImNoYXQtb25saW5lIn0.ZlQraacKAWVXzDySSljiuFpkeVpYADKcsE5UbtaqXcE"
+            // Get and return the access token.
+            // This function can return a JavaScript Promise if asynchronous
+            // logic is required to retrieve the access token.
+          }
         })
         .configureLogging(signalR.LogLevel.Information)
         .build();
