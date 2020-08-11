@@ -98,7 +98,7 @@ export default {
      */
     sendMessage(message) {
       this.connection
-        .invoke("SendMessage", message)
+        .invoke("SendMessageToCaller", message)
         .catch(err => console.error(err));
 
       this.input = "";
