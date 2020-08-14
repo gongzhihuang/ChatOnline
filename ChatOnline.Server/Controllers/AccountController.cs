@@ -19,11 +19,11 @@ namespace ChatOnline.Server.Controllers
         private readonly IConfiguration _configuration;
         private readonly ILogger<AccountController> _logger;
 
-        private readonly List<User> _users = new List<User>()
+        private readonly List<Account> _accounts = new List<Account>()
         {
-            new User("1","aa","aaa"),
-            new User("2","bb","bbb"),
-            new User("3","cc","ccc")
+            new Account("1","aa","aaa"),
+            new Account("2","bb","bbb"),
+            new Account("3","cc","ccc")
         };
 
         public AccountController(ILogger<AccountController> logger,
@@ -32,17 +32,22 @@ namespace ChatOnline.Server.Controllers
             _logger = logger;
             _configuration = configuration;
         }
-        
+
         // [HttpGet]
         // public IActionResult Index()
         // {
         //     return null;
         // }
-        
+
+        /// <summary>
+        /// 登录，获取token
+        /// </summary>
+        /// <param name="userDto"></param>
+        /// <returns></returns>
         [HttpPost("login")]
-        public IActionResult Login([FromBody]LoginRequestDto userDto)
+        public IActionResult Login([FromBody] LoginRequestDto userDto)
         {
-            var res = _users.FirstOrDefault(x => x.Name == userDto.Name && x.Password == userDto.Password);
+            var res = _accounts.FirstOrDefault(x => x.Name == userDto.Name && x.Password == userDto.Password);
             if (res == null)
             {
                 return BadRequest();
@@ -84,26 +89,65 @@ namespace ChatOnline.Server.Controllers
         }
     }
 
-    public class User
+    /// <summary>
+    /// 账户
+    /// </summary>
+    public class Account
     {
-        public User(string userId, string name, string password)
+        public Account(string userId, string name, string password)
         {
             UserId = userId;
             Name = name;
             Password = password;
         }
-        
+
         public string UserId { get; set; }
-        
+
         public string Name { get; set; }
-        
+
         public string Password { get; set; }
+    }
+
+    /// <summary>
+    /// 用户
+    /// </summary>
+    public class User
+    {
+        public User(string userId, string name)
+        {
+            UserId = userId;
+            Name = name;
+        }
+
+        /// <summary>
+        /// 用户ID
+        /// </summary>
+        public string UserId { get; private set; }
+
+        /// <summary>
+        /// 用户姓名
+        /// </summary>
+        public string Name { get; private set; }
+
+        /// <summary>
+        /// 好友列表
+        /// </summary>
+        public List<User> Friends { get; private set; }
+
+        /// <summary>
+        /// 增加好友
+        /// </summary>
+        /// <param name="user"></param>
+        public void AddFriend(User user)
+        {
+            Friends.Add(user);
+        }
     }
 
     public class LoginRequestDto
     {
         public string Name { get; set; }
-        
+
         public string Password { get; set; }
     }
 }
