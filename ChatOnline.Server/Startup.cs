@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using ChatOnline.Server.Hubs;
+using ChatOnline.Server.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -121,6 +122,8 @@ namespace ChatOnline.Server
             #endregion
             
             services.AddSingleton<IUserIdProvider, UserIdProvider>();
+
+            services.AddTransient<IIMUserService, IMUserService>();
 
             services.AddControllers();
             services.AddSignalR();

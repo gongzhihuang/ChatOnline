@@ -1,47 +1,35 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using ChatOnline.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 
 namespace ChatOnline.Server.Hubs
 {
     public class ChatHub : Hub<IChatClient>
     {
-        //[Authorize]
-        //public async Task SendMessage(string message)
-        //{
-        //    var user = Context.UserIdentifier;
-        //    await Clients.All.SendAsync("ReceiveMessage", message);
-        //}
-        
-        //[Authorize]
-        //public Task SendPrivateMessage(string user, string message)
-        //{
-        //    return Clients.User(user).SendAsync("ReceiveMessage", message);
-        //}
+
+        private readonly ILogger<ChatHub> _logger;
+
+        private readonly IIMUserService _iMUserService;
+
+        public ChatHub(ILogger<ChatHub> logger, IIMUserService iMUserService)
+        {
+            _logger = logger;
+            _iMUserService = iMUserService;
+        }
 
         /// <summary>
         /// 发送消息给指定用户
         /// </summary>
-        /// <param name="user"></param>
         /// <param name="message"></param>
         /// <returns></returns>
         [Authorize]
-        public async Task SendMessage(string user, string message)
+        public async Task SendMessage(SendMessage message)
         {
-            await Clients.User(user).ReceiveMessage(user, message);
-        }
-
-        /// <summary>
-        /// 发送消息给所有连接的用户
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        [Authorize]
-        public Task SendMessageToCaller(string message)
-        {
-            return Clients.All.ReceiveMessage(message);
+            await Clients.User(message.IMNumber).ReceiveMessage(message);
         }
 
         /// <summary>
@@ -50,7 +38,6 @@ namespace ChatOnline.Server.Hubs
         /// <returns></returns>
         public override async Task OnConnectedAsync()
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, "SignalR Users");
             await base.OnConnectedAsync();
         }
 
@@ -61,7 +48,6 @@ namespace ChatOnline.Server.Hubs
         /// <returns></returns>
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, "SignalR Users");
             await base.OnDisconnectedAsync(exception);
         }
     }
@@ -76,8 +62,15 @@ namespace ChatOnline.Server.Hubs
         /// <returns></returns>
         public virtual string GetUserId(HubConnectionContext connection)
         {
-            var userId = connection.User.Claims.FirstOrDefault(x => x.Type == "name")?.Value;
+            var userId = connection.User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
             return userId;
         }
+    }
+
+    public class SendMessage
+    {
+        public string IMNumber { get; set; }
+
+        public string Message { get; set; }
     }
 }

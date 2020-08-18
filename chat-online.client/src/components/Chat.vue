@@ -2,10 +2,22 @@
   <div class="chat">
     <div class="chat-user">
       登录
-      <el-input class="name" v-model="userName" placeholder="用户名"></el-input>
+      <el-input class="name" v-model="iMNumber" placeholder="账号"></el-input>
       <el-input v-model="password" placeholder="密码"></el-input>
       <el-button class="btn" size="small" @click="login()">登录</el-button>
     </div>
+
+    <div class="friends">
+      <el-select v-model="friendimNumber" placeholder="请选择">
+        <el-option
+          v-for="item in friends"
+          :key="item.imNumber"
+          :label="item.name"
+          :value="item.imNumber"
+        ></el-option>
+      </el-select>
+    </div>
+
     <div class="chat-list">
       <el-card class="box-card">
         <div slot="header" class="clearfix">
@@ -14,25 +26,24 @@
             style="float: right; padding: 3px 0"
             type="text"
             @click="clearMessages()"
-            >清空聊天记录</el-button
-          >
+          >清空聊天记录</el-button>
         </div>
-        <div v-for="(item, index) in mesages" :key="index" class="text item">
-          {{ item }}
-        </div>
+        <div v-for="(item, index) in mesages" :key="index" class="text item">{{ item }}</div>
       </el-card>
     </div>
     <div class="chat-operation">
       <div>
         <el-input v-model="input" placeholder="请输入内容"></el-input>
       </div>
-      <div><el-button @click="sendMessage(input)">发送消息</el-button></div>
+      <div>
+        <el-button @click="sendMessage()">发送消息</el-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import * as signalR from "@aspnet/signalr";
+import * as signalR from "@microsoft/signalr";
 
 export default {
   name: "Chat",
@@ -41,12 +52,23 @@ export default {
   },
   data() {
     return {
-      userName: "",
+      iMNumber: "",
       password: "",
       access_token: "",
       connection: null,
       input: "",
-      mesages: []
+      mesages: [],
+      friends: [
+        {
+          imNumber: 22222,
+          name: "22222"
+        },
+        {
+          imNumber: 33333,
+          name: "33333"
+        }
+      ],
+      friendimNumber: ""
     };
   },
   created() {
@@ -58,8 +80,8 @@ export default {
      */
     login() {
       let params = {
-        name: this.userName,
-        password: this.password
+        IMNumber: parseInt(this.iMNumber),
+        Password: this.password
       };
       let that = this;
       this.$axios
@@ -88,7 +110,8 @@ export default {
 
       //调用signalr服务方法，发送信息
       this.connection.on("ReceiveMessage", message => {
-        this.mesages.push(message);
+        console.log(message);
+        this.mesages.push(message.message);
       });
 
       this.connection.start();
@@ -96,10 +119,17 @@ export default {
     /**
      * 发送消息
      */
-    sendMessage(message) {
+    sendMessage() {
+      let message = {
+        IMNumber: this.friendimNumber.toString(),
+        Message: this.input.toString()
+      };
+      console.log(message);
       this.connection
-        .invoke("SendMessageToCaller", message)
+        .invoke("SendMessage", message)
         .catch(err => console.error(err));
+
+      this.mesages.push(this.input);
 
       this.input = "";
     },
@@ -128,6 +158,9 @@ export default {
   .btn {
     margin-top: 10px;
   }
+}
+.friends{
+  margin-bottom: 10px;
 }
 .chat-list {
 }
