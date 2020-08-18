@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using ChatOnline.Server.Models;
+using ChatOnline.Server.ViewModels;
 using IdentityModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -74,7 +75,7 @@ namespace ChatOnline.Server.Controllers
                 var JwtHander = new JwtSecurityTokenHandler();
                 var token = JwtHander.WriteToken(jwt);
 
-                return Ok(new
+                return Ok(new LoginResponseDto()
                 {
                     access_token = token,
                     token_type = "Bearer",
@@ -85,15 +86,5 @@ namespace ChatOnline.Server.Controllers
                 return BadRequest();
             }
         }
-    }
-
-
-    public class LoginRequestDto
-    {
-        public long IMNumber { get; set; }
-
-        public string Name { get; set; }
-
-        public string Password { get; set; }
     }
 }
