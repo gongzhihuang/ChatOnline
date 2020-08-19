@@ -7,7 +7,7 @@ namespace ChatOnline.Server.Controllers
 {
     // [Authorize]
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class IMUserController : ControllerBase
     {
         private readonly ILogger<IMUserController> _logger;

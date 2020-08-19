@@ -15,7 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace ChatOnline.Server.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class AccountController : ControllerBase
     {
         private readonly IConfiguration _configuration;

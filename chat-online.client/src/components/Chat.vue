@@ -9,26 +9,21 @@
 
     <div class="friends">
       <el-select v-model="friendimNumber" placeholder="请选择">
-        <el-option
-          v-for="item in friends"
-          :key="item.imNumber"
-          :label="item.name"
-          :value="item.imNumber"
-        ></el-option>
+        <el-option v-for="item in friends" :key="item.imNumber" :label="item.name" :value="item.imNumber" @click.native="selectCurrentFriend(item)"></el-option>
       </el-select>
     </div>
 
     <div class="chat-list">
       <el-card class="box-card">
         <div slot="header" class="clearfix">
-          <span>聊天室</span>
+          <span>chat {{ currentFriend.name }}</span>
           <el-button
             style="float: right; padding: 3px 0"
             type="text"
             @click="clearMessages()"
           >清空聊天记录</el-button>
         </div>
-        <div v-for="(item, index) in mesages" :key="index" class="text item">{{ item }}</div>
+        <div v-for="(item, index) in mesages" :key="index" :class="{text:true, item:true}">{{ item }}</div>
       </el-card>
     </div>
     <div class="chat-operation">
@@ -58,17 +53,9 @@ export default {
       connection: null,
       input: "",
       mesages: [],
-      friends: [
-        {
-          imNumber: 22222,
-          name: "22222"
-        },
-        {
-          imNumber: 33333,
-          name: "33333"
-        }
-      ],
-      friendimNumber: ""
+      friends: [],
+      friendimNumber: "",
+      currentFriend: {}
     };
   },
   created() {
@@ -85,10 +72,11 @@ export default {
       };
       let that = this;
       this.$axios
-        .post("https://localhost:5001/Account/login", params)
+        .post("https://localhost:5001/api/Account/login", params)
         .then(function(response) {
           console.log(response);
           that.access_token = response.data.access_token;
+          that.getFriends();
           that.connectServer(); //登录成功，连接到signar服务
         })
         .catch(function(error) {
@@ -111,17 +99,45 @@ export default {
       //调用signalr服务方法，发送信息
       this.connection.on("ReceiveMessage", message => {
         console.log(message);
-        this.mesages.push(message.message);
+        this.mesages.push(message);
       });
 
       this.connection.start();
+    },
+    /**
+     * 加载好友列表
+     */
+    getFriends() {
+      let params = {
+        iMNumber: parseInt(this.iMNumber)
+      };
+      let that = this;
+      this.$axios
+        .get(
+          "https://localhost:5001/api/IMUser/friends?iMNumber=" +
+            params.iMNumber
+        )
+        .then(function(response) {
+          console.log(response);
+          that.friends = response.data;
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    },
+    /**
+     * 选择聊天好友
+     */
+    selectCurrentFriend(friend) {
+      console.log(friend);
+      this.currentFriend = friend;
     },
     /**
      * 发送消息
      */
     sendMessage() {
       let message = {
-        IMNumber: this.friendimNumber.toString(),
+        IMNumber: this.currentFriend.imNumber.toString(),
         Message: this.input.toString()
       };
       console.log(message);
@@ -129,7 +145,7 @@ export default {
         .invoke("SendMessage", message)
         .catch(err => console.error(err));
 
-      this.mesages.push(this.input);
+      // this.mesages.push(this.input);
 
       this.input = "";
     },
@@ -159,7 +175,7 @@ export default {
     margin-top: 10px;
   }
 }
-.friends{
+.friends {
   margin-bottom: 10px;
 }
 .chat-list {
