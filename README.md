@@ -16,7 +16,7 @@ services.AddSignalR();
 app.UseEndpoints(endpoints =>
 {
 		endpoints.MapControllers();
-		endpoints.MapHub<ChatHub>("/chathub");
+		endpoints.MapHub<ChatHub>("/hubs/chathub");
 });
 ```
 
@@ -81,28 +81,44 @@ https://docs.microsoft.com/zh-cn/aspnet/core/signalr/javascript-client?view=aspn
 
 
 ```
-npm install --save @aspnet/signalr
+// npm install --save @aspnet/signalr
+
+npm install --save @microsoft/signalr
 ```
 
 SignalR库在vue中的使用：
 
 ```
-import * as signalR from "@aspnet/signalr";
+// import * as signalR from "@aspnet/signalr";
 
+import * as signalR from "@microsoft/signalr";
 ...
 
+data() {
+  return {
+    access_token: "",
+    connection: null,
+    mesages: []
+  };
+},
 created(){
+  var that = this;
 	this.connection = new signalR.HubConnectionBuilder()
     .withUrl("https:localhost:5001/chatHub", {
       skipNegotiation: true,
-      transport: signalR.HttpTransportType.WebSockets
+      transport: signalR.HttpTransportType.WebSockets,
+      accessTokenFactory: () => {
+        return that.access_token;
+      }
     })
     .configureLogging(signalR.LogLevel.Information)
     .build();
 
-  //this.connection.on("ReceiveMessage", message => {
-  //  this.mesages.push(message);
-  //});
+  this.connection.on("ReceiveMessage", message => {
+    // 收到消息
+    console.log(message);
+    this.mesages.push(message);
+  });
 
   this.connection.start();
 }

@@ -96,8 +96,8 @@ export default {
         .configureLogging(signalR.LogLevel.Information)
         .build();
 
-      //调用signalr服务方法，发送信息
       this.connection.on("ReceiveMessage", message => {
+        // 收到消息
         console.log(message);
         this.mesages.push(message);
       });
