@@ -5,6 +5,11 @@ namespace ChatOnline.Server.Hubs
 {
     public interface IChatClient
     {
-        Task ReceiveMessage(SendMessage message);
+        /// <summary>
+        /// 客户端收到消息
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        Task ReceiveMessage(MessageContent message);
     }
 }

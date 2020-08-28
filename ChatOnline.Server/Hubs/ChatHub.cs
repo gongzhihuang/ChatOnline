@@ -10,9 +10,7 @@ namespace ChatOnline.Server.Hubs
 {
     public class ChatHub : Hub<IChatClient>
     {
-
         private readonly ILogger<ChatHub> _logger;
-
         private readonly IIMUserService _iMUserService;
 
         public ChatHub(ILogger<ChatHub> logger, IIMUserService iMUserService)
@@ -27,8 +25,9 @@ namespace ChatOnline.Server.Hubs
         /// <param name="message"></param>
         /// <returns></returns>
         [Authorize]
-        public async Task SendMessage(SendMessage message)
+        public async Task SendMessage(MessageContent message)
         {
+            _logger.LogInformation($"给{message.IMNumber}发送消息:【{message.Message}】");
             await Clients.User(message.IMNumber).ReceiveMessage(message);
         }
 
@@ -38,16 +37,21 @@ namespace ChatOnline.Server.Hubs
         /// <returns></returns>
         public override async Task OnConnectedAsync()
         {
+            _logger.LogInformation($"用户上线了");
             await base.OnConnectedAsync();
         }
 
         /// <summary>
-        /// 客户端断开连接是执行
+        /// 客户端断开连接时执行
         /// </summary>
         /// <param name="exception">正常断开时，exception为null</param>
         /// <returns></returns>
         public override async Task OnDisconnectedAsync(Exception exception)
         {
+            if (exception == null)
+            {
+                _logger.LogInformation($"用户下线了");
+            }
             await base.OnDisconnectedAsync(exception);
         }
     }
@@ -67,7 +71,10 @@ namespace ChatOnline.Server.Hubs
         }
     }
 
-    public class SendMessage
+    /// <summary>
+    /// 消息内容
+    /// </summary>
+    public class MessageContent
     {
         public string IMNumber { get; set; }
 
