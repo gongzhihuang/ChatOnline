@@ -36,7 +36,7 @@ namespace ChatOnline.Server
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            
+
 
             #region 数据库
 
@@ -53,8 +53,6 @@ namespace ChatOnline.Server
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
-
-                // c.OperationFilter<AddCommonParameOperationFilter>();
 
                 c.AddSecurityDefinition("Bearer",
                     new OpenApiSecurityScheme
@@ -76,7 +74,7 @@ namespace ChatOnline.Server
             });
 
             #endregion
-            
+
             #region Authorization
             var Issurer = Configuration["LoginInfo:Issurer"];
             var Audience = Configuration["LoginInfo:Audience"];
@@ -120,10 +118,12 @@ namespace ChatOnline.Server
                 };
             });
             #endregion
-            
+
             services.AddSingleton<IUserIdProvider, UserIdProvider>();
 
-            services.AddTransient<IIMUserService, IMUserService>();
+            services.AddScoped<IChatOnlineUserService, ChatOnlineUserService>();
+            services.AddScoped<IChatRecordService, ChatRecordService>();
+            services.AddScoped<IFriendsRelationService, FriendsRelationService>();
 
             services.AddControllers();
             services.AddSignalR();
@@ -146,7 +146,7 @@ namespace ChatOnline.Server
                 // c.DocExpansion(DocExpansion.None);
                 c.DefaultModelsExpandDepth(-1);
             });
-            
+
             app.UseRouting();
 
             app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());

@@ -1,22 +1,43 @@
-namespace ChatOnline.Server.Models 
+namespace ChatOnline.Server.Models
 {
     /// <summary>
     /// 好友关系
     /// </summary>
-    public class FriendsRelation 
+    public class FriendsRelation
     {
 
-        public FriendsRelation (string id, long userIMNumber, long friendIMNumber) 
+        public FriendsRelation(long id, long userId, long friendId)
         {
-            this.Id = id;
-            this.UserIMNumber = userIMNumber;
-            this.FriendIMNumber = friendIMNumber;
+            Id = id;
+            UserId = userId;
+            FriendId = friendId;
+        }
+        public FriendsRelation(long userId, long friendId)
+        {
+            UserId = userId;
+            FriendId = friendId;
         }
 
-        public string Id { get; private set; }
+        public long Id { get; private set; }
 
-        public long UserIMNumber { get; private set; }
+        public long UserId { get; private set; }
 
-        public long FriendIMNumber { get; private set; }
+        public long FriendId { get; private set; }
     }
+
+    //public enum FriendState
+    //{
+    //    /// <summary>
+    //    /// 未通过
+    //    /// </summary>
+    //    NotPass,
+    //    /// <summary>
+    //    /// 通过
+    //    /// </summary>
+    //    Pass,
+    //    /// <summary>
+    //    /// 拒绝
+    //    /// </summary>
+    //    Refuse
+    //}
 }

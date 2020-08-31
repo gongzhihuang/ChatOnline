@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using ChatOnline.Server.Models;
-using ChatOnline.Server.ViewModels;
 using IdentityModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -32,12 +31,6 @@ namespace ChatOnline.Server.Controllers
             _dbContext = dbContext;
         }
 
-        // [HttpGet]
-        // public IActionResult Index()
-        // {
-        //     return null;
-        // }
-
         /// <summary>
         /// 登录，获取token
         /// </summary>
@@ -46,7 +39,9 @@ namespace ChatOnline.Server.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequestDto userDto)
         {
-            var res = _dbContext.IMUsers.FirstOrDefault(x => x.IMNumber == userDto.IMNumber && x.Password == userDto.Password);
+            // 模拟登陆验证
+            var res = _dbContext.ChatOnlineUsers.FirstOrDefault(x => x.Id == userDto.Id && x.ActualName == userDto.ActualName);
+
             if (res == null)
             {
                 return BadRequest();
@@ -58,8 +53,8 @@ namespace ChatOnline.Server.Controllers
 
                 IEnumerable<Claim> claims = new Claim[]
                 {
-                    new Claim(JwtClaimTypes.Id,res.IMNumber.ToString()),
-                    new Claim(JwtClaimTypes.Name,res.Name),
+                    new Claim(JwtClaimTypes.Id,res.Id.ToString()),
+                    new Claim(JwtClaimTypes.Name,res.ActualName),
                 };
 
                 var nbf = DateTime.UtcNow;
@@ -75,7 +70,7 @@ namespace ChatOnline.Server.Controllers
                 var JwtHander = new JwtSecurityTokenHandler();
                 var token = JwtHander.WriteToken(jwt);
 
-                return Ok(new LoginResponseDto()
+                return Ok(new
                 {
                     access_token = token,
                     token_type = "Bearer",
@@ -86,5 +81,12 @@ namespace ChatOnline.Server.Controllers
                 return BadRequest();
             }
         }
+    }
+
+    public class LoginRequestDto
+    {
+        public long Id { get; set; }
+
+        public string ActualName { get; set; }
     }
 }

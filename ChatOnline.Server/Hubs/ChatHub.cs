@@ -11,12 +11,15 @@ namespace ChatOnline.Server.Hubs
     public class ChatHub : Hub<IChatClient>
     {
         private readonly ILogger<ChatHub> _logger;
-        private readonly IIMUserService _iMUserService;
 
-        public ChatHub(ILogger<ChatHub> logger, IIMUserService iMUserService)
+        private readonly IChatOnlineUserService _chatOnlineUserService;
+        private readonly IChatRecordService _chatRecordService;
+
+        public ChatHub(ILogger<ChatHub> logger, IChatOnlineUserService chatOnlineUserService, IChatRecordService chatRecordService)
         {
             _logger = logger;
-            _iMUserService = iMUserService;
+            _chatOnlineUserService = chatOnlineUserService;
+            _chatRecordService = chatRecordService;
         }
 
         /// <summary>
@@ -27,8 +30,11 @@ namespace ChatOnline.Server.Hubs
         [Authorize]
         public async Task SendMessage(MessageContent message)
         {
-            _logger.LogInformation($"给{message.IMNumber}发送消息:【{message.Message}】");
-            await Clients.User(message.IMNumber).ReceiveMessage(message);
+            _logger.LogInformation($"{Context.UserIdentifier}给{message.Id}发送消息:【{message.Message}】");
+
+            await _chatRecordService.CreateChatRecordAsync(long.Parse(Context.UserIdentifier), message);
+
+            await Clients.User(message.Id).ReceiveMessage(message);
         }
 
         /// <summary>
@@ -37,7 +43,12 @@ namespace ChatOnline.Server.Hubs
         /// <returns></returns>
         public override async Task OnConnectedAsync()
         {
-            _logger.LogInformation($"用户上线了");
+            _logger.LogInformation($"用户{Context.UserIdentifier}上线了,连接ID:{Context.ConnectionId}");
+
+            var chatOnlineUser = await _chatOnlineUserService.GetChatOnlineUserAsync(long.Parse(Context.UserIdentifier));
+
+            await _chatOnlineUserService.ChatOnlineUserOnline(chatOnlineUser, Context.ConnectionId);
+
             await base.OnConnectedAsync();
         }
 
@@ -50,34 +61,15 @@ namespace ChatOnline.Server.Hubs
         {
             if (exception == null)
             {
-                _logger.LogInformation($"用户下线了");
+                _logger.LogInformation($"用户{Context.UserIdentifier}正常下线了,连接ID:{Context.ConnectionId}");
             }
+
+            _logger.LogInformation($"用户{Context.UserIdentifier}异常下线了,连接ID:{Context.ConnectionId}");
+
+            var chatOnlineUser = await _chatOnlineUserService.GetChatOnlineUserAsync(long.Parse(Context.UserIdentifier));
+            await _chatOnlineUserService.ChatOnlineUserOffline(chatOnlineUser);
+
             await base.OnDisconnectedAsync(exception);
         }
-    }
-
-
-    public class UserIdProvider : IUserIdProvider
-    {
-        /// <summary>
-        /// 为SignalR创建用户Id的方式，可以给指定用户发送消息
-        /// </summary>
-        /// <param name="connection"></param>
-        /// <returns></returns>
-        public virtual string GetUserId(HubConnectionContext connection)
-        {
-            var userId = connection.User.Claims.FirstOrDefault(x => x.Type == "id")?.Value;
-            return userId;
-        }
-    }
-
-    /// <summary>
-    /// 消息内容
-    /// </summary>
-    public class MessageContent
-    {
-        public string IMNumber { get; set; }
-
-        public string Message { get; set; }
     }
 }

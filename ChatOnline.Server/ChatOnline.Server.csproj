@@ -19,5 +19,6 @@
   
   <ItemGroup>
     <Folder Include="Hubs\" />
+    <Folder Include="DTOs\" />
   </ItemGroup>
 </Project>
