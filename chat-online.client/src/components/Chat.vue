@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import * as signalR from "@aspnet/signalr";
+import * as signalR from "@microsoft/signalr";
 
 export default {
   name: "Chat",
