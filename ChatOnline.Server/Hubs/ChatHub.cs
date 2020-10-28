@@ -1,47 +1,40 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using ChatOnline.Server.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 
 namespace ChatOnline.Server.Hubs
 {
     public class ChatHub : Hub<IChatClient>
     {
-        //[Authorize]
-        //public async Task SendMessage(string message)
-        //{
-        //    var user = Context.UserIdentifier;
-        //    await Clients.All.SendAsync("ReceiveMessage", message);
-        //}
-        
-        //[Authorize]
-        //public Task SendPrivateMessage(string user, string message)
-        //{
-        //    return Clients.User(user).SendAsync("ReceiveMessage", message);
-        //}
+        private readonly ILogger<ChatHub> _logger;
+
+        private readonly IChatOnlineUserService _chatOnlineUserService;
+        private readonly IChatRecordService _chatRecordService;
+
+        public ChatHub(ILogger<ChatHub> logger, IChatOnlineUserService chatOnlineUserService, IChatRecordService chatRecordService)
+        {
+            _logger = logger;
+            _chatOnlineUserService = chatOnlineUserService;
+            _chatRecordService = chatRecordService;
+        }
 
         /// <summary>
         /// 发送消息给指定用户
         /// </summary>
-        /// <param name="user"></param>
         /// <param name="message"></param>
         /// <returns></returns>
         [Authorize]
-        public async Task SendMessage(string user, string message)
+        public async Task SendMessage(MessageContent message)
         {
-            await Clients.User(user).ReceiveMessage(user, message);
-        }
+            _logger.LogInformation($"{Context.UserIdentifier}给{message.Id}发送消息:【{message.Message}】");
 
-        /// <summary>
-        /// 发送消息给所有连接的用户
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        [Authorize]
-        public Task SendMessageToCaller(string message)
-        {
-            return Clients.All.ReceiveMessage(message);
+            await _chatRecordService.CreateChatRecordAsync(long.Parse(Context.UserIdentifier), message);
+
+            await Clients.User(message.Id).ReceiveMessage(message);
         }
 
         /// <summary>
@@ -50,34 +43,33 @@ namespace ChatOnline.Server.Hubs
         /// <returns></returns>
         public override async Task OnConnectedAsync()
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, "SignalR Users");
+            _logger.LogInformation($"用户{Context.UserIdentifier}上线了,连接ID:{Context.ConnectionId}");
+
+            var chatOnlineUser = await _chatOnlineUserService.GetChatOnlineUserAsync(long.Parse(Context.UserIdentifier));
+
+            await _chatOnlineUserService.ChatOnlineUserOnline(chatOnlineUser, Context.ConnectionId);
+
             await base.OnConnectedAsync();
         }
 
         /// <summary>
-        /// 客户端断开连接是执行
+        /// 客户端断开连接时执行
         /// </summary>
         /// <param name="exception">正常断开时，exception为null</param>
         /// <returns></returns>
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, "SignalR Users");
+            if (exception == null)
+            {
+                _logger.LogInformation($"用户{Context.UserIdentifier}正常下线了,连接ID:{Context.ConnectionId}");
+            }
+
+            _logger.LogInformation($"用户{Context.UserIdentifier}异常下线了,连接ID:{Context.ConnectionId}");
+
+            var chatOnlineUser = await _chatOnlineUserService.GetChatOnlineUserAsync(long.Parse(Context.UserIdentifier));
+            await _chatOnlineUserService.ChatOnlineUserOffline(chatOnlineUser);
+
             await base.OnDisconnectedAsync(exception);
-        }
-    }
-
-
-    public class UserIdProvider : IUserIdProvider
-    {
-        /// <summary>
-        /// 为SignalR创建用户Id的方式，可以给指定用户发送消息
-        /// </summary>
-        /// <param name="connection"></param>
-        /// <returns></returns>
-        public virtual string GetUserId(HubConnectionContext connection)
-        {
-            var userId = connection.User.Claims.FirstOrDefault(x => x.Type == "name")?.Value;
-            return userId;
         }
     }
 }

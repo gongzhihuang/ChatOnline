@@ -6,12 +6,14 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using ChatOnline.Server.Hubs;
+using ChatOnline.Server.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,8 +36,14 @@ namespace ChatOnline.Server
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
-            services.AddSignalR();
+
+
+            #region 数据库
+
+            string connectionString = Configuration.GetSection("connectionString").Value;
+            services.AddDbContext<IMDbContext>(options => options.UseMySql(connectionString));
+
+            #endregion
 
             #region Swagger
 
@@ -45,8 +53,6 @@ namespace ChatOnline.Server
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
-
-                // c.OperationFilter<AddCommonParameOperationFilter>();
 
                 c.AddSecurityDefinition("Bearer",
                     new OpenApiSecurityScheme
@@ -68,7 +74,7 @@ namespace ChatOnline.Server
             });
 
             #endregion
-            
+
             #region Authorization
             var Issurer = Configuration["LoginInfo:Issurer"];
             var Audience = Configuration["LoginInfo:Audience"];
@@ -112,8 +118,15 @@ namespace ChatOnline.Server
                 };
             });
             #endregion
-            
+
             services.AddSingleton<IUserIdProvider, UserIdProvider>();
+
+            services.AddScoped<IChatOnlineUserService, ChatOnlineUserService>();
+            services.AddScoped<IChatRecordService, ChatRecordService>();
+            services.AddScoped<IFriendsRelationService, FriendsRelationService>();
+
+            services.AddControllers();
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -133,7 +146,7 @@ namespace ChatOnline.Server
                 // c.DocExpansion(DocExpansion.None);
                 c.DefaultModelsExpandDepth(-1);
             });
-            
+
             app.UseRouting();
 
             app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
